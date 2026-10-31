@@ -30,8 +30,8 @@ function createPng(width, height, getPixelRgba) {
 
   const deflated = zlib.deflateSync(rawData);
 
-  // PNG Signature
-  const signature = Buffer.from([137, 80, 78, 72, 13, 10, 26, 10]);
+  // PNG Signature (\x89PNG\r\n\x1a\n)
+  const signature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
 
   // IHDR chunk
   const ihdrData = Buffer.alloc(13);

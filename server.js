@@ -2325,7 +2325,8 @@ app.put('/api/admin/promociones/:id', (req, res) => {
         ? await validarContenidoPromocion(req.body.contenido)
         : null;
       const activa = req.body.activa === undefined ? antes.activa : (req.body.activa ? 1 : 0);
-      const actualizaFoto = req.body && req.body.foto !== undefined;
+      const esFotoExistente = typeof req.body.foto === 'string' && (req.body.foto.startsWith('/api/') || req.body.foto.startsWith('http'));
+      const actualizaFoto = req.body && req.body.foto !== undefined && !esFotoExistente;
       const foto = actualizaFoto ? (req.body.foto ? validarFoto(req.body.foto) : null) : null;
       if (actualizaFoto && req.body.foto && foto === false) {
         throw new BusinessError('La foto no es válida. Usa una imagen PNG, JPG o WEBP.');

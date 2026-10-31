@@ -9208,7 +9208,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 .map(([id_producto, cantidad]) => ({ id_producto, cantidad })),
             id_admin: currentUser ? currentUser.id_admin : 1
         };
-        if (fotoNuevaPromo !== null) {
+        if (fotoNuevaPromo !== null && !String(fotoNuevaPromo).startsWith('/api/') && !String(fotoNuevaPromo).startsWith('http')) {
             cuerpo.foto = fotoNuevaPromo;
         }
 
