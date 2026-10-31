@@ -509,7 +509,7 @@
                                     <option value="efectivo">💵 Efectivo</option>
                                     <option value="qr">📱 QR</option>
                                     <option value="tarjeta">💳 Tarjeta</option>
-                                    <option value="transfer">🏦 Transferencia</option>
+                                    <option value="vales">🎟️ Vales</option>
                                     <option value="mixto">🔀 Múltiple</option>
                                 </select>
                             </div>
@@ -1877,7 +1877,7 @@
                 <button type="button" class="pay-tab active" data-metodo="1">💵<span>Efectivo</span></button>
                 <button type="button" class="pay-tab" data-metodo="3">📱<span>QR</span></button>
                 <button type="button" class="pay-tab" data-metodo="2">💳<span>Tarjeta</span></button>
-                <button type="button" class="pay-tab" data-metodo="4">🏦<span>Transfer.</span></button>
+                <button type="button" class="pay-tab" data-metodo="4">🎟️<span>Vales</span></button>
                 <button type="button" class="pay-tab" data-metodo="mixto">🔀<span>Múltiple</span></button>
             </div>
 
@@ -1920,6 +1920,34 @@
                 </label>
                 <input type="text" id="pay-referencia" class="pay-input" maxlength="40"
                     placeholder="Ej. últimos dígitos o nº de operación">
+            </div>
+
+            <!-- VALES: pago con vales prepagados con monto personalizable -->
+            <div id="pay-panel-vales" class="pay-panel hide">
+                <p class="pay-label">Monto del vale prepagado</p>
+                <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                    <input type="number" id="pay-vale-monto" class="pay-input" min="0" step="0.01" inputmode="decimal"
+                        placeholder="0.00 Bs." style="flex: 1; font-size: 1.2rem; font-weight: 700;">
+                    <button type="button" id="pay-vale-total-btn" class="quick-cash-btn" style="flex: 0 0 auto; padding: 0 16px; font-weight: 700; white-space: nowrap;">
+                        Total exacto
+                    </button>
+                </div>
+                <div id="pay-vale-cubierto-box" class="pay-change hide" style="background: rgba(16, 185, 129, 0.08); border-color: rgba(16, 185, 129, 0.3); color: #047857; font-weight: 600; padding: 10px 14px; border-radius: 10px; margin-top: 10px;">
+                    <span>🎟️ El vale cubre la cuenta</span>
+                    <strong id="pay-vale-cubierto-msg" style="color: #059669; font-size: 0.95rem;"></strong>
+                </div>
+                <div id="pay-vale-resto-box" class="pay-change hide" style="background: rgba(236, 72, 153, 0.08); border-color: rgba(236, 72, 153, 0.3); border-radius: 12px; padding: 12px 14px; margin-top: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <span style="font-size: 0.85rem; font-weight: 600; color: #831843;">Saldo restante por cobrar:</span>
+                        <strong id="pay-vale-resto-amount" style="color: #be185d; font-size: 1.15rem; font-weight: 800;">0.00 Bs.</strong>
+                    </div>
+                    <p class="pay-label" style="margin: 8px 0 4px 0; font-size: 0.8rem; color: #9d174d;">¿Cómo paga el saldo restante?</p>
+                    <div class="vale-resto-tabs" id="pay-vale-resto-methods">
+                        <button type="button" class="vale-resto-tab active" data-metodo-resto="1">💵<span>Efectivo</span></button>
+                        <button type="button" class="vale-resto-tab" data-metodo-resto="3">📱<span>QR</span></button>
+                        <button type="button" class="vale-resto-tab" data-metodo-resto="2">💳<span>Tarjeta</span></button>
+                    </div>
+                </div>
             </div>
 
             <!-- MIXTO: tantas líneas como haga falta, cada una con el método que sea -->

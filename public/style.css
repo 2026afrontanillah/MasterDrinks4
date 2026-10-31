@@ -2433,6 +2433,41 @@ select option {
     color: var(--text-primary);
 }
 
+.vale-resto-tabs {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.vale-resto-tab {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 9px 8px;
+    border: 1.5px solid rgba(0, 0, 0, 0.12);
+    border-radius: 10px;
+    background: #ffffff;
+    color: var(--text-secondary, #64748b);
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.vale-resto-tab:active {
+    transform: scale(0.97);
+}
+
+.vale-resto-tab.active {
+    background: rgba(236, 72, 153, 0.12);
+    border-color: #ec4899;
+    color: #be185d;
+    font-weight: 700;
+    box-shadow: 0 0 0 1px #ec4899;
+}
+
 .pay-panel {
     margin-bottom: 18px;
 }

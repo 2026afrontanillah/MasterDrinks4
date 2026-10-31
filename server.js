@@ -687,7 +687,7 @@ const mockDb = {
     { id_metodo_pago: 1, nombre: 'EFECTIVO', descripcion: 'Pago en efectivo', activo: 1 },
     { id_metodo_pago: 2, nombre: 'TARJETA', descripcion: 'Pago con tarjeta', activo: 1 },
     { id_metodo_pago: 3, nombre: 'QR', descripcion: 'Pago con código QR', activo: 1 },
-    { id_metodo_pago: 4, nombre: 'TRANSFERENCIA', descripcion: 'Transferencia bancaria', activo: 1 }
+    { id_metodo_pago: 4, nombre: 'VALES', descripcion: 'Pago con vales prepagados', activo: 1 }
   ],
   movimiento_stock: [],
   auditoria_admin: [
@@ -3863,7 +3863,7 @@ async function construirReporte(query) {
     SELECT cj.id_cajero, cj.nombre AS cajero,
            COALESCE(SUM(CASE WHEN UPPER(mp.nombre) = 'EFECTIVO' THEN p.monto ELSE 0 END), 0) AS efectivo,
            COALESCE(SUM(CASE WHEN UPPER(mp.nombre) = 'QR' THEN p.monto ELSE 0 END), 0) AS qr,
-           COALESCE(SUM(CASE WHEN UPPER(mp.nombre) = 'TRANSFERENCIA' THEN p.monto ELSE 0 END), 0) AS transferencia,
+           COALESCE(SUM(CASE WHEN UPPER(mp.nombre) IN ('VALES', 'VALE', 'TRANSFERENCIA') THEN p.monto ELSE 0 END), 0) AS vales,
            COALESCE(SUM(CASE WHEN UPPER(mp.nombre) = 'TARJETA' THEN p.monto ELSE 0 END), 0) AS tarjeta,
            COALESCE(SUM(p.monto), 0) AS total
     FROM pago_comanda p
@@ -3880,7 +3880,7 @@ async function construirReporte(query) {
     SELECT m.id_mesero, m.nombre AS mesero,
            COALESCE(SUM(CASE WHEN UPPER(mp.nombre) = 'EFECTIVO' THEN p.monto ELSE 0 END), 0) AS efectivo,
            COALESCE(SUM(CASE WHEN UPPER(mp.nombre) = 'QR' THEN p.monto ELSE 0 END), 0) AS qr,
-           COALESCE(SUM(CASE WHEN UPPER(mp.nombre) = 'TRANSFERENCIA' THEN p.monto ELSE 0 END), 0) AS transferencia,
+           COALESCE(SUM(CASE WHEN UPPER(mp.nombre) IN ('VALES', 'VALE', 'TRANSFERENCIA') THEN p.monto ELSE 0 END), 0) AS vales,
            COALESCE(SUM(CASE WHEN UPPER(mp.nombre) = 'TARJETA' THEN p.monto ELSE 0 END), 0) AS tarjeta,
            COALESCE(SUM(p.monto), 0) AS total
     FROM pago_comanda p

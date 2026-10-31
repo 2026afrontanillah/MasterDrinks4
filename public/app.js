@@ -2897,9 +2897,12 @@ document.addEventListener('DOMContentLoaded', () => {
         1: { nombre: 'Efectivo', ref: 'EFECTIVO-CAJA' },
         2: { nombre: 'Tarjeta', ref: 'TARJETA-OP' },
         3: { nombre: 'Código QR', ref: 'QR-MONEY' },
-        4: { nombre: 'Transferencia', ref: 'TRANSF-OP' }
+        4: { nombre: 'Vales', ref: 'VALE-PRE' }
     };
     const EFECTIVO = 1;
+    const TARJETA = 2;
+    const QR = 3;
+    const VALES = 4;
 
     let metodoActivo = EFECTIVO;   // id_metodo_pago, o 'mixto'
     let efectivoRecibido = 0;      // billete con el que paga, sólo para el cambio
@@ -2942,28 +2945,7 @@ document.addEventListener('DOMContentLoaded', () => {
         payError.classList.remove('hide');
     }
 
-    const QR = 3;   // id_metodo_pago del código QR
-
-    function seleccionarMetodo(metodo) {
-        metodoActivo = metodo;
-        mostrarErrorPago('');
-
-        document.querySelectorAll('.pay-tab').forEach(tab => {
-            tab.classList.toggle('active', tab.dataset.metodo === String(metodo));
-        });
-
-        // Sólo el efectivo necesita cambio, sólo el mixto necesita repartir y
-        // sólo el QR necesita la referencia del comprobante.
-        document.getElementById('pay-panel-efectivo')
-            .classList.toggle('hide', metodo !== EFECTIVO);
-        document.getElementById('pay-panel-mixto')
-            .classList.toggle('hide', metodo !== 'mixto');
-        document.getElementById('pay-panel-qr')
-            .classList.toggle('hide', metodo !== QR);
-
-        if (metodo === 'mixto') reiniciarLineasPago();
-        if (metodo === QR) prepararPanelQr();
-    }
+    // (seleccionarMetodo y prepararPanelQr están declarados más abajo con la lógica completa)
 
     // ==========================================
     // COBRO POR QR
@@ -3131,8 +3113,16 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 el.classList.add('status-rojo');
             }
+        } else if (metodoActivo === VALES) {
+            const inpVale = document.getElementById('pay-vale-monto');
+            const valNum = parseFloat(inpVale ? inpVale.value : 0) || 0;
+            if (valNum <= 0) {
+                el.classList.add('status-rojo');
+            } else {
+                el.classList.add('status-verde');
+            }
         } else {
-            // Pagos exactos directos (QR, Tarjeta, Transferencia)
+            // Pagos exactos directos (QR, Tarjeta)
             el.classList.add('status-verde');
         }
     }
@@ -3210,6 +3200,17 @@ document.addEventListener('DOMContentLoaded', () => {
         payRecibidoInput.value = '';
         lineasPago = [];
         mostrarErrorPago('');
+
+        const inpVale = document.getElementById('pay-vale-monto');
+        if (inpVale) inpVale.value = '';
+        const restoBox = document.getElementById('pay-vale-resto-box');
+        if (restoBox) restoBox.classList.add('hide');
+        const cubiertoBox = document.getElementById('pay-vale-cubierto-box');
+        if (cubiertoBox) cubiertoBox.classList.add('hide');
+        metodoRestoVale = EFECTIVO;
+        document.querySelectorAll('.vale-resto-tab').forEach(t => {
+            t.classList.toggle('active', Number(t.dataset.metodoResto) === EFECTIVO);
+        });
 
         const esCortesia = Boolean(currentWaiter && currentWaiter.es_cortesia);
         const payTabs = document.getElementById('pay-tabs');
@@ -3302,6 +3303,54 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    let metodoRestoVale = EFECTIVO;
+
+    function recalcularVale() {
+        const inpVale = document.getElementById('pay-vale-monto');
+        const restoBox = document.getElementById('pay-vale-resto-box');
+        const cubiertoBox = document.getElementById('pay-vale-cubierto-box');
+        const restoAmountEl = document.getElementById('pay-vale-resto-amount');
+        const cubiertoMsgEl = document.getElementById('pay-vale-cubierto-msg');
+
+        if (!inpVale) return;
+        const valNum = round2(parseFloat(inpVale.value) || 0);
+
+        mostrarErrorPago('');
+
+        if (valNum <= 0) {
+            if (restoBox) restoBox.classList.add('hide');
+            if (cubiertoBox) cubiertoBox.classList.add('hide');
+        } else if (valNum >= orderTotal) {
+            if (restoBox) restoBox.classList.add('hide');
+            if (cubiertoBox) {
+                cubiertoBox.classList.remove('hide');
+                const excedente = round2(valNum - orderTotal);
+                if (excedente > 0) {
+                    if (cubiertoMsgEl) cubiertoMsgEl.textContent = `(Excedente de ${excedente.toFixed(2)} Bs. - sin cambio)`;
+                } else {
+                    if (cubiertoMsgEl) cubiertoMsgEl.textContent = `(Monto exacto: ${valNum.toFixed(2)} Bs.)`;
+                }
+            }
+        } else {
+            const resto = round2(orderTotal - valNum);
+            if (cubiertoBox) cubiertoBox.classList.add('hide');
+            if (restoBox) {
+                restoBox.classList.remove('hide');
+                if (restoAmountEl) restoAmountEl.textContent = `${resto.toFixed(2)} Bs.`;
+            }
+        }
+
+        actualizarColorTotalPago();
+    }
+
+    function prepararPanelVales() {
+        const inpVale = document.getElementById('pay-vale-monto');
+        if (inpVale && !inpVale.value) {
+            setTimeout(() => inpVale.focus(), 80);
+        }
+        recalcularVale();
+    }
+
     function seleccionarMetodo(metodo) {
         metodoActivo = metodo;
         mostrarErrorPago('');
@@ -3310,14 +3359,18 @@ document.addEventListener('DOMContentLoaded', () => {
             tab.classList.toggle('active', tab.dataset.metodo === String(metodo));
         });
 
-        // Sólo el efectivo necesita cambio, sólo el mixto necesita repartir y
-        // sólo el QR necesita la referencia del comprobante.
+        // Sólo el efectivo necesita cambio, sólo el mixto necesita repartir,
+        // sólo el QR necesita la referencia del comprobante y sólo vales pide monto del vale.
         document.getElementById('pay-panel-efectivo')
             .classList.toggle('hide', metodo !== EFECTIVO);
         document.getElementById('pay-panel-mixto')
             .classList.toggle('hide', metodo !== 'mixto');
         document.getElementById('pay-panel-qr')
             .classList.toggle('hide', metodo !== QR);
+        const panelVales = document.getElementById('pay-panel-vales');
+        if (panelVales) {
+            panelVales.classList.toggle('hide', metodo !== VALES);
+        }
 
         if (metodo === 'mixto') {
             if (payMixtoEf) {
@@ -3328,6 +3381,7 @@ document.addEventListener('DOMContentLoaded', () => {
             reiniciarLineasPago();
         }
         if (metodo === QR) prepararPanelQr();
+        if (metodo === VALES) prepararPanelVales();
         actualizarColorTotalPago();
     }
 
@@ -3355,6 +3409,24 @@ document.addEventListener('DOMContentLoaded', () => {
             monto: round2(monto),
             referencia: referencia(id)
         });
+
+        if (metodoActivo === VALES) {
+            const inpVale = document.getElementById('pay-vale-monto');
+            const valNum = round2(parseFloat(inpVale ? inpVale.value : 0) || 0);
+            if (valNum <= 0) {
+                mostrarErrorPago('Ingresa el monto del vale prepagado.');
+                if (inpVale) inpVale.focus();
+                return null;
+            }
+
+            if (valNum >= orderTotal) {
+                return [pago(VALES, orderTotal)];
+            } else {
+                const resto = round2(orderTotal - valNum);
+                const idResto = metodoRestoVale || EFECTIVO;
+                return [pago(VALES, valNum), pago(idResto, resto)];
+            }
+        }
 
         if (metodoActivo !== 'mixto') {
             if (metodoActivo === EFECTIVO && efectivoRecibido > 0 &&
@@ -3428,6 +3500,32 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('pay-close-btn').addEventListener('click', cerrarModalCobro);
     payModal.addEventListener('click', e => {
         if (e.target === payModal) cerrarModalCobro();
+    });
+
+    const payValeMontoInput = document.getElementById('pay-vale-monto');
+    const payValeTotalBtn = document.getElementById('pay-vale-total-btn');
+
+    if (payValeMontoInput) {
+        payValeMontoInput.addEventListener('input', () => {
+            recalcularVale();
+        });
+    }
+
+    if (payValeTotalBtn) {
+        payValeTotalBtn.addEventListener('click', () => {
+            if (payValeMontoInput) {
+                payValeMontoInput.value = orderTotal.toFixed(2);
+                recalcularVale();
+            }
+        });
+    }
+
+    document.querySelectorAll('.vale-resto-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.vale-resto-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            metodoRestoVale = Number(tab.dataset.metodoResto) || EFECTIVO;
+        });
     });
 
     // FINALIZATION & CHECKOUT SUBMIT
@@ -4437,6 +4535,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         'Efectivo': '💵',
                         'QR': '📱',
                         'Tarjeta': '💳',
+                        'Vales': '🎟️',
                         'Transferencia': '🏦',
                         'Cortesía': '🎁',
                         'Otro': '🪙'
@@ -4445,8 +4544,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         'Efectivo': '#22c55e',
                         'QR': '#3b82f6',
                         'Tarjeta': '#a855f7',
+                        'Vales': '#ec4899',
                         'Transferencia': '#f97316',
-                        'Cortesía': '#ec4899',
+                        'Cortesía': '#f59e0b',
                         'Otro': '#64748b'
                     };
 
